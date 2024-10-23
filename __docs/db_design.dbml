@@ -1,0 +1,119 @@
+// User management
+Table User {
+  id INTEGER [pk, increment]
+  username VARCHAR(100) [not null, unique]
+  email VARCHAR(200) [not null]
+  user_role_id INTEGER [ref: > UserRole.id]
+  hashed_password BINARY(60) [not null]
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+  deleted_at TIMESTAMP
+  
+  indexes {
+    (email) [unique]
+    (username) [unique]
+  }
+}
+
+
+Table UserRole {
+  id INTEGER [pk, increment]
+  name VARCHAR(64)
+}
+
+// Chat session management
+Table Conversation {
+  id INTEGER [pk, increment]
+  creator_id INTEGER [not null, ref: > User.id]
+  status ENUM('active', 'archived', 'deleted') [not null, default: 'active']
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+  deleted_at TIMESTAMP
+
+  indexes {
+    (creator_id)
+    (status)
+  }
+}
+
+// Message handling
+Table Message {
+  id INTEGER [pk, increment]
+  sender_id INTEGER [not null, ref: > User.id]
+  conversation_id INTEGER [not null, ref: > Conversation.id]
+  message TEXT [not null]
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+  deleted_at TIMESTAMP
+
+  indexes {
+    (conversation_id)
+  }
+}
+
+// LLM response tracking
+Table LLMResult {
+  id INTEGER [pk, increment]
+  receiver_id INTEGER [ref: > User.id]
+  conversation_id INTEGER [ref: > Conversation.id]
+  message_id INTEGER [not null, ref: > Message.id]
+  model VARCHAR(200) [not null]
+  response TEXT [not null]
+  tokens_used INTEGER [not null]
+  star_rating SMALLINT
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (receiver_id, message_id, model) [unique]
+  }
+}
+
+// Tool management
+Table Tool {
+  id INTEGER [pk, increment]
+  name VARCHAR(200) [not null]
+  description TEXT
+  version VARCHAR(10) [not null]
+  embedding VECTOR(384)
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+  embedding_updated_at TIMESTAMP
+
+  indexes {
+    (name, version) [unique]
+  }
+}
+
+// Deletion tracking
+Table DeletedMessage {
+  id INTEGER [pk, increment]
+  message_id INTEGER [not null, ref: - Message.id]
+  deleted_by_user_id INTEGER [not null, ref: > User.id]
+  reason TEXT
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (message_id)
+    (deleted_by_user_id)
+  }
+}
+
+Table DeletedConversation {
+  id INTEGER [pk, increment]
+  conversation_id INTEGER [not null, ref: - Conversation.id]
+  deleted_by_user_id INTEGER [not null, ref: > User.id]
+  reason TEXT
+  created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (conversation_id)
+    (deleted_by_user_id)
+  }
+}
+
+// Tool usage tracking
+Table LLMResult2Tool {
+  id INTEGER [pk, increment]
+  tool_id INTEGER [not null, ref: > Tool.id]
+  llmresult_id INTEGER [not null, ref: > LLMResult.id]
+  
+  indexes {
+    (tool_id, llmresult_id) [unique]
+  }
+}
