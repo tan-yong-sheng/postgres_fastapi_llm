@@ -1,11 +1,16 @@
 from datetime import datetime
 
+
 from pydantic import BaseModel, EmailStr
 
 
 class UserSchema(BaseModel):
     username: str
     email: EmailStr
+
+
+class UserCreateSchema(UserSchema):
+    password: str
 
 
 class UserRequestSchema(UserSchema):

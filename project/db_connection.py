@@ -18,15 +18,11 @@ Base = declarative_base()
 
 
 def get_db_session():
-    session = SessionLocal()
+    db = SessionLocal()
     try:
-        yield session
-    except Exception as e:
-        session.rollback()
-        logger.error(f"Error: {e}")
-        raise e
+        yield db
     finally:
-        session.close()
+        db.close()
 
 
 db_context = contextmanager(get_db_session)
