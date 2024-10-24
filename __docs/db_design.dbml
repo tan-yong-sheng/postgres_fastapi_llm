@@ -4,7 +4,7 @@ Table User {
   username VARCHAR(100) [not null, unique]
   email VARCHAR(200) [not null]
   user_role_id INTEGER [ref: > UserRole.id]
-  hashed_password BINARY(60) [not null]
+  password_hash VARCHAR [not null]
   created_at TIMESTAMP [not null, default: `CURRENT_TIMESTAMP`]
   deleted_at TIMESTAMP
   
