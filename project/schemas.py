@@ -6,9 +6,6 @@ from pydantic import BaseModel, EmailStr
 class UserSchema(BaseModel):
     username: str
     email: EmailStr
-    user_role_id: int
-    password_hash: str
-    created_at: datetime
 
 
 class UserRequestSchema(UserSchema):
@@ -17,8 +14,10 @@ class UserRequestSchema(UserSchema):
 
 class UserResponseSchema(UserSchema):
     id: int
+    created_at: datetime
 
 
 class UserDeleteSchema(UserSchema):
     id: int
+    user_role_id: int
     deleted_at: datetime

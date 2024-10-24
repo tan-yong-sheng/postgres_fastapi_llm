@@ -13,7 +13,6 @@ class UserOrm(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
-    user_role_id = Column(Integer)
     password_hash = Column(String)
     created_at = Column(
         DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
@@ -22,3 +21,10 @@ class UserOrm(Base):
 
     def password_verification(self, password: str):
         return passlib.hash.bcrypt.verify(password, self.password_hash)
+
+
+
+if __name__ == "__main__":
+    from project.db_connection import engine
+
+    Base.metadata.create_all(bind=engine)
