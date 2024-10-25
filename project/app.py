@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from project.db_connection import get_db_session
 from project.db_models import UserOrm
 from project.jwt_services import create_token, current_user
-from project.schemas import UserCreateSchema
+from project.schemas import UserCreateSchema, UserResponseSchema
 
 _ = load_dotenv(find_dotenv())
 app = fastapi.FastAPI()
@@ -82,9 +82,10 @@ async def login_user(
     return await create_token(db_user, db)
 
 
-@app.get("/api/users/current-user")
-async def get_home(auth=Depends(current_user)):
-    return {"message": "Hello, World!"}
+# not working yet..
+@app.get("/api/users/current-user", response_model=UserResponseSchema)
+async def get_home(user: UserResponseSchema = Depends(current_user)):
+    return user
 
 
 if __name__ == "__main__":

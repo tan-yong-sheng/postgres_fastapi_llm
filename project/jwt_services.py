@@ -29,7 +29,7 @@ async def current_user(
     try:
         payload = jwt.decode(token, os.getenv("_JWT_SECRET_KEY"), algorithms=["HS256"])
         # get user by Id is already available in the decoded user payload along with the token
-        db_user = db.query(UserOrm).filter(UserOrm.email == payload["id"]).first()
-    except Exception:
-        raise HTTPException(status_code=401, detail="wrong credentials")
+        db_user = db.query(UserOrm).filter(UserOrm.id == payload["id"]).first()
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"{e}: wrong credentials")
     return db_user
