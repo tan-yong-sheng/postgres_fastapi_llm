@@ -1,20 +1,23 @@
 from datetime import datetime
+from typing import Annotated
 
-
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, StringConstraints
 
 
 class UserSchema(BaseModel):
-    username: str
-    email: EmailStr
+    username: Annotated[str, StringConstraints(min_length=1)]
+    email: Annotated[EmailStr, StringConstraints(min_length=1)]
+    
 
 
-class UserCreateSchema(UserSchema):
-    password: str
+class UserCreateSchema(BaseModel):
+    username: Annotated[str, StringConstraints(min_length=1)]
+    email: Annotated[EmailStr, StringConstraints(min_length=1)]
+    password: Annotated[str, StringConstraints(min_length=1)]
 
 
 class UserRequestSchema(UserSchema):
-    password: str
+    pass
 
 
 class UserResponseSchema(UserSchema):
@@ -24,5 +27,5 @@ class UserResponseSchema(UserSchema):
 
 class UserDeleteSchema(UserSchema):
     id: int
-    user_role_id: int
+    created_at: datetime
     deleted_at: datetime
