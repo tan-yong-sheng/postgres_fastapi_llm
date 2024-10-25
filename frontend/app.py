@@ -1,3 +1,6 @@
+# note: seems like it saves memory ? but, perhaps I don't want want to use streamlit_chat library
+# so that i can easily customize the chat history or memory...
+
 import os
 
 import openai
@@ -19,10 +22,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Set org ID and API key
-openai.organization = "<YOUR_OPENAI_ORG_ID>"
-openai.api_key = "<YOUR_OPENAI_API_KEY>"
-
 # Initialise session state variables
 if "generated" not in st.session_state:
     st.session_state["generated"] = []
@@ -43,7 +42,9 @@ if "total_cost" not in st.session_state:
 
 # Sidebar - let user choose model, show total cost of current conversation, and let user clear the current conversation
 st.sidebar.title("Sidebar")
-model_name = st.sidebar.radio("Choose a model:", ("GPT-3.5", "GPT-4"))
+model_name = st.sidebar.radio(
+    "Choose a model:", ("GPT-4o-mini", "GPT-4o", "GPT-4-Turbo")
+)
 counter_placeholder = st.sidebar.empty()
 counter_placeholder.write(
     f"Total cost of this conversation: ${st.session_state['total_cost']:.5f}"
@@ -51,10 +52,13 @@ counter_placeholder.write(
 clear_button = st.sidebar.button("Clear Conversation", key="clear")
 
 # Map model names to OpenAI model IDs
-if model_name == "GPT-3.5":
-    model = "gpt-3.5-turbo"
-else:
-    model = "gpt-4"
+if model_name == "GPT-4o-mini":
+    model = "gpt-4o-mini"
+elif model_name == "GPT-4o":
+    model = "gpt-4o"
+elif model_name == "GPT-4-Turbo":
+    model = "gpt-4-turbo"
+
 
 # reset everything
 if clear_button:
@@ -77,7 +81,7 @@ if clear_button:
 def generate_response(prompt):
     st.session_state["messages"].append({"role": "user", "content": prompt})
 
-    completion = client.chat.completions(
+    completion = client.chat.completions.create(
         model=model, messages=st.session_state["messages"]
     )
     response = completion.choices[0].message.content
@@ -110,10 +114,13 @@ with container:
         st.session_state["total_tokens"].append(total_tokens)
 
         # from https://openai.com/pricing#language-models
-        if model_name == "GPT-3.5":
-            cost = total_tokens * 0.002 / 1000
-        else:
-            cost = (prompt_tokens * 0.03 + completion_tokens * 0.06) / 1000
+
+        if model_name == "GPT-4-Turbo":
+            cost = total_tokens * 7 / 1000000
+        elif model_name == "GPT-4o-mini":
+            cost = total_tokens * 0.125 / 1000000
+        elif model_name == "GPT-4o":
+            cost = total_tokens * 2 / 1000000
 
         st.session_state["cost"].append(cost)
         st.session_state["total_cost"] += cost
