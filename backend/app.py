@@ -5,10 +5,10 @@ from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
-from project.db_connection import get_db_session
-from project.db_models import UserOrm
-from project.jwt_services import create_token, current_user
-from project.schemas import UserCreateSchema, UserResponseSchema
+from backend.db_connection import get_db_session
+from backend.db_models import UserOrm
+from backend.jwt_services import create_token, current_user
+from backend.schemas import UserCreateSchema, UserResponseSchema
 
 _ = load_dotenv(find_dotenv())
 app = fastapi.FastAPI()

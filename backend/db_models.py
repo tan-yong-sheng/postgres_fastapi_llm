@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 from sqlalchemy.types import DateTime, String
 
-from project.db_connection import Base
+from backend.db_connection import Base
 
 
 class UserOrm(Base):
@@ -35,6 +35,6 @@ class UserOrm(Base):
 
 
 if __name__ == "__main__":
-    from project.db_connection import engine
+    from backend.db_connection import engine
 
     Base.metadata.create_all(bind=engine)

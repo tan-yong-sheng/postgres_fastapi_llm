@@ -14,7 +14,7 @@ from alembic import context
 from dotenv import find_dotenv, load_dotenv # new
 from sqlalchemy import engine_from_config, pool
 
-from project.db_models import Base # new
+from backend.db_models import Base # new
 
 _ = load_dotenv(find_dotenv()) # new
 
