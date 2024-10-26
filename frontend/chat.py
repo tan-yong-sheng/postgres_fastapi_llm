@@ -20,11 +20,11 @@ def get_openai_api_key() -> str:
 
 
 # bug: not included chat_history
-def get_openai_response(prompt: str, chat_history: str) -> str:
+def get_openai_response(message: str, chat_history: str) -> str:
     openai_client = openai.OpenAI(api_key=get_openai_api_key())
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "user", "content": prompt}],
+        messages=[{"role": "user", "content": message}],
     )
     return response.choices[0].message.content
 

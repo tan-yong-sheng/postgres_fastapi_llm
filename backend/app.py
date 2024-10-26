@@ -1,15 +1,20 @@
+import os
+
 import fastapi
+import openai
 import passlib.hash
 from dotenv import find_dotenv, load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.sql.expression import desc
 
 from backend.db_connection import get_db_session
-from backend.db_models import UserOrm
+from backend.db_models import MessageOrm, SessionOrm, UserOrm
 from backend.jwt_services import create_token, current_user
-from backend.schemas import UserCreateSchema, UserResponseSchema
+from backend.schemas.message_schemas import AIResponseSchema, MessageRequestSchema
+from backend.schemas.user_schemas import UserCreateSchema, UserResponseSchema
 
 _ = load_dotenv(find_dotenv())
 app = fastapi.FastAPI()
@@ -94,6 +99,89 @@ async def login_user(
 @app.get("/api/users/current-user", response_model=UserResponseSchema)
 async def current_user(user: UserResponseSchema = Depends(current_user)):
     return user
+
+
+def get_openai_response(message: str) -> str:
+    openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    response = openai_client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": message}],
+        temperature=0.7,
+        max_tokens=150,
+        top_p=1,
+        frequency_penalty=0,
+        presence_penalty=0,
+    )
+    return response.choices[0].message.content
+
+
+@app.post("/send_message", response_model=AIResponseSchema)
+async def send_message(
+    request: MessageRequestSchema,
+    user: UserResponseSchema = Depends(current_user),
+    db_session: AsyncSession = Depends(get_db_session),
+):
+    print("======0")
+    try:
+        # Manage session existence
+        session_obj = SessionOrm(user_id=user.id)
+        print("======1")
+        db_session.add(session_obj)
+        print("======2")
+        await db_session.commit()
+        await db_session.refresh(session_obj)
+        print(session_obj)
+        print("======3")
+        session_id = session_obj.id  # Assign the new session ID
+
+        # Fetch the last 5 messages for context - helps maintain continuity
+        stmt = (
+            select(MessageOrm.user_id, MessageOrm.message)
+            .filter(MessageOrm.session_id == session_id)
+            .order_by(desc(MessageOrm.created_at))
+            .limit(5)
+        )
+        result = await db_session.execute(stmt)
+        recent_messages = result.scalars().all()
+
+        # Building context from recent messages
+        context = " ".join(
+            [f"{message.user_id}: {message.message}" for message in recent_messages]
+        )
+
+        # Forming a context-rich prompt for the LLM
+        full_prompt = f"{context} User: {request.message}"
+        ai_response = get_openai_response(full_prompt)
+        print("======4")
+        # Logging the conversation
+        user_message_obj = MessageOrm(
+            user_id=user.id,
+            session_id=session_id,
+            role="User",
+            message=request.message,
+        )
+        db_session.add(user_message_obj)
+        await db_session.commit()
+        await db_session.refresh(user_message_obj)
+        print("======5")
+
+        AI_message_obj = MessageOrm(
+            user_id=user.id,
+            session_id=session_id,
+            role="AI",
+            message=ai_response,  # Corrected to use AI response
+        )
+        db_session.add(AI_message_obj)
+        await db_session.commit()
+        await db_session.refresh(AI_message_obj)
+
+        print("======6")
+        return AIResponseSchema(ai_response=ai_response, session_id=session_id)
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Consider more specific exception handling and logging
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

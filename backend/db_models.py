@@ -46,7 +46,7 @@ class SessionOrm(Base):
     start_timestamp = Column(
         DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
     )
-    end_timestamp = Column(DateTime(timezone=True), nullable=True)
+    end_timestamp = Column(DateTime(timezone=True), nullable=True, default=None)
 
 
 class MessageOrm(Base):
@@ -63,6 +63,7 @@ class MessageOrm(Base):
         ForeignKey("session.id", ondelete="cascade", name="fk__message__session_id"),
         nullable=False,
     )
+    role = Column(String, nullable=False)
     message = Column(TEXT, nullable=False)
     created_at = Column(
         DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)

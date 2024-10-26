@@ -18,15 +18,13 @@ Base = declarative_base()
 
 
 async def get_db_session():
-    async with SessionLocal() as session:
+    async with SessionLocal() as db_session:
         try:
-            yield session
+            yield db_session
         except Exception as e:
-            await session.rollback()
+            await db_session.rollback()
             logger.error(f"Error: {e}")
             raise e
-        finally:
-            session.close()
 
 
 db_context = asynccontextmanager(get_db_session)
