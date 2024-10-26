@@ -82,9 +82,8 @@ async def login_user(
     return await create_token(db_user, db)
 
 
-# not working yet..
 @app.get("/api/users/current-user", response_model=UserResponseSchema)
-async def get_home(user: UserResponseSchema = Depends(current_user)):
+async def current_user(user: UserResponseSchema = Depends(current_user)):
     return user
 
 
