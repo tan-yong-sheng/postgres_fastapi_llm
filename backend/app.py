@@ -1,4 +1,5 @@
 import os
+from contextlib import asynccontextmanager
 
 import fastapi
 import openai
@@ -17,14 +18,24 @@ from backend.schemas.message_schemas import AIResponseSchema, MessageRequestSche
 from backend.schemas.user_schemas import UserCreateSchema, UserResponseSchema
 
 _ = load_dotenv(find_dotenv())
-app = fastapi.FastAPI()
+
+
+# Create FastAPI app with lifespan
+@asynccontextmanager
+async def lifespan(app: fastapi.FastAPI):
+    # Startup
+    yield
+    # Shutdown
+
+
+app = fastapi.FastAPI(lifespan=lifespan)
 
 
 async def check_user_exists(
     db_session: AsyncSession,
     user: UserCreateSchema,
 ) -> None:
-    stmt = select(UserOrm).filter(UserOrm.username == user.username)
+    stmt = select(UserOrm).where(UserOrm.username == user.username)
     result = await db_session.execute(stmt)
     existing_user = result.scalars().first()
 
@@ -66,7 +77,7 @@ async def register_user(
 
 async def get_user_by_username(username: str, db_session: AsyncSession) -> UserOrm:
     # get user by email or username
-    stmt = select(UserOrm).filter(UserOrm.username == username)
+    stmt = select(UserOrm).where(UserOrm.username == username)
     result = await db_session.execute(stmt)
     return result.scalars().first()
 
@@ -101,7 +112,9 @@ async def current_user(user: UserResponseSchema = Depends(current_user)):
     return user
 
 
-def get_openai_response(message: str) -> str:
+# not perfect as it's just combining the last 5 messages, and feed it to the model...
+# The model doesn't know it's previous conversation
+def get_openai_response(message: str, user_id: int) -> str:
     openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
@@ -111,6 +124,7 @@ def get_openai_response(message: str) -> str:
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
+        metadata={"user_id": user_id},
     )
     return response.choices[0].message.content
 
@@ -121,62 +135,55 @@ async def send_message(
     user: UserResponseSchema = Depends(current_user),
     db_session: AsyncSession = Depends(get_db_session),
 ):
-    print("======0")
     try:
-        # Manage session existence
-        session_obj = SessionOrm(user_id=user.id)
-        print("======1")
-        db_session.add(session_obj)
-        print("======2")
-        await db_session.commit()
-        await db_session.refresh(session_obj)
-        print(session_obj)
-        print("======3")
-        session_id = session_obj.id  # Assign the new session ID
+        if request.session_id is None:
+            # Manage session existence
+            session_obj = SessionOrm(user_id=user.id)
+            db_session.add(session_obj)
+            await db_session.commit()
+            # await db_session.refresh(session_obj)
+            request.session_id = session_obj.id
 
         # Fetch the last 5 messages for context - helps maintain continuity
         stmt = (
             select(MessageOrm.user_id, MessageOrm.message)
-            .filter(MessageOrm.session_id == session_id)
+            .where(MessageOrm.session_id == request.session_id)
             .order_by(desc(MessageOrm.created_at))
             .limit(5)
         )
         result = await db_session.execute(stmt)
-        recent_messages = result.scalars().all()
+        recent_messages = result.fetchall()
 
         # Building context from recent messages
-        context = " ".join(
-            [f"{message.user_id}: {message.message}" for message in recent_messages]
-        )
+        print(recent_messages)
+        context = " ".join([message[1] for message in recent_messages])
 
         # Forming a context-rich prompt for the LLM
         full_prompt = f"{context} User: {request.message}"
-        ai_response = get_openai_response(full_prompt)
-        print("======4")
         # Logging the conversation
         user_message_obj = MessageOrm(
             user_id=user.id,
-            session_id=session_id,
+            session_id=request.session_id,
             role="User",
             message=request.message,
         )
         db_session.add(user_message_obj)
-        await db_session.commit()
-        await db_session.refresh(user_message_obj)
-        print("======5")
 
+        await db_session.commit()
+        # await db_session.refresh(user_message_obj)
+
+        ai_response = get_openai_response(full_prompt, user_id=user.id)
         AI_message_obj = MessageOrm(
             user_id=user.id,
-            session_id=session_id,
+            session_id=request.session_id,
             role="AI",
             message=ai_response,  # Corrected to use AI response
         )
         db_session.add(AI_message_obj)
         await db_session.commit()
-        await db_session.refresh(AI_message_obj)
+        # await db_session.refresh(AI_message_obj)
 
-        print("======6")
-        return AIResponseSchema(ai_response=ai_response, session_id=session_id)
+        return AIResponseSchema(ai_response=ai_response, session_id=request.session_id)
     except HTTPException:
         raise
     except Exception as e:

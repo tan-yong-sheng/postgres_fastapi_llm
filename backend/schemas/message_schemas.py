@@ -5,12 +5,11 @@ from pydantic import BaseModel
 
 # Define Pydantic models for request and response data
 class MessageSchema(BaseModel):
-    role: str
     message: str
 
 
 class MessageRequestSchema(MessageSchema):
-    pass
+    session_id: Optional[int] = None
 
 
 class MessageHistorySchema(MessageSchema):
@@ -19,4 +18,4 @@ class MessageHistorySchema(MessageSchema):
 
 class AIResponseSchema(BaseModel):
     ai_response: str
-    session_id: Optional[int]
+    session_id: Optional[int] = None

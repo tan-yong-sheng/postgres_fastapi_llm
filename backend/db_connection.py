@@ -2,16 +2,16 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.orm import declarative_base
 
 logger = logging.getLogger(__name__)
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_async_engine(DATABASE_URL)
-SessionLocal = sessionmaker(
-    autocommit=False, autoflush=True, bind=engine, class_=AsyncSession
+SessionLocal = async_sessionmaker(
+    autocommit=False, autoflush=True, bind=engine, expire_on_commit=False
 )
 
 Base = declarative_base()
