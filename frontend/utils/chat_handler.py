@@ -1,5 +1,7 @@
 from datetime import date
 
+
+# bug: just put it here for time being... may need to delete
 def load_previous_chat_session_ids(
     conn, table, date_start: date, date_end: date
 ) -> list:
