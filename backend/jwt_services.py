@@ -1,7 +1,6 @@
 import os
 
 import jwt
-from dotenv import find_dotenv, load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,9 +10,7 @@ from backend.db_connection import get_db_session
 from backend.db_models import UserOrm
 from backend.schemas.user_schemas import UserResponseSchema
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/login")
-
-_ = load_dotenv(find_dotenv())
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=os.getenv("AUTH_TOKEN_URL"))
 
 
 async def create_token(user: UserOrm, db_session: AsyncSession):
