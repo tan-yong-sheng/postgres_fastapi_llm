@@ -8,8 +8,8 @@ from sqlalchemy.future import select
 
 from backend.db_connection import get_db_session
 from backend.db_models import UserOrm
-from backend.jwt_services import create_token
-from backend.schemas import UserCreateSchema
+from backend.jwt_services import create_token, current_user
+from backend.schemas import UserCreateSchema, UserResponseSchema
 
 _ = load_dotenv(find_dotenv())
 app = fastapi.FastAPI()
@@ -89,6 +89,11 @@ async def login_user(
         raise HTTPException(status_code=401, detail="Wrong login credentials.")
     # create token if user exists
     return await create_token(db_user, db_session)
+
+
+@app.get("/api/users/current-user", response_model=UserResponseSchema)
+async def current_user(user: UserResponseSchema = Depends(current_user)):
+    return user
 
 
 if __name__ == "__main__":
