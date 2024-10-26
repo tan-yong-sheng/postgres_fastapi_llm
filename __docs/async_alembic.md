@@ -1,5 +1,7 @@
 ## Getting started for Database migrations with Alembic
 
+Reference: https://dev.to/matib/alembic-with-async-sqlalchemy-1ga
+
 1. Initialize Alembic in the project. Use the -t async flag for asynchronous support.: `alembic init -t async migrations`
 
 2. Go to `alembic.ini`, and change the `[alembic]` item at line 3 to `[devdb]`
