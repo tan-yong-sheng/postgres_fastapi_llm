@@ -2,7 +2,6 @@ import fastapi
 from dotenv import find_dotenv, load_dotenv
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from backend.db_connection import get_db_session
@@ -55,12 +54,13 @@ async def register_user(user: UserCreateSchema, db: Session = Depends(get_db_ses
     return await create_token(user_obj, db)
 
 
-async def get_user_by_email(email: EmailStr, db: Session) -> UserOrm:
-    return db.query(UserOrm).filter(UserOrm.email == email).first()
+async def get_user_by_username(username: str, db: Session) -> UserOrm:
+    # get user by email or username
+    return db.query(UserOrm).filter(UserOrm.username == username).first()
 
 
-async def login(email: str, password: str, db: Session = Depends(get_db_session)):
-    db_user = await get_user_by_email(email, db)
+async def login(username: str, password: str, db: Session = Depends(get_db_session)):
+    db_user = await get_user_by_username(username, db)
     # return false if no user with email found
     if not db_user:
         return False
