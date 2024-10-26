@@ -129,6 +129,7 @@ def get_openai_response(message: str, user_id: int) -> str:
     return response.choices[0].message.content
 
 
+# bug: need to break it down ...
 @app.post("/send_message", response_model=AIResponseSchema)
 async def send_message(
     request: MessageRequestSchema,
