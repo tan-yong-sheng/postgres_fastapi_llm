@@ -29,3 +29,16 @@ class UserDeleteSchema(UserSchema):
     id: int
     created_at: datetime
     deleted_at: datetime
+
+
+# Define Pydantic models for request and response data
+class MessageRequest(BaseModel):
+    user_id: int
+    session_id: Optional[int] = None
+    message: str
+
+
+# Define Pydantic models for request and response data
+class AIResponse(BaseModel):
+    ai_response: str
+    session_id: Optional[int]

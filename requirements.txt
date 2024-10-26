@@ -1,7 +1,9 @@
+aiopg==1.4.0
 alembic==1.13.3
 altair==5.4.1
 annotated-types==0.7.0
 anyio==4.6.2.post1
+async-timeout==4.0.3
 attrs==24.2.0
 blinker==1.8.2
 cachetools==5.5.0

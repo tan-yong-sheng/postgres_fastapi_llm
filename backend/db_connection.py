@@ -1,26 +1,32 @@
 import logging
 import os
-from contextlib import contextmanager
+from contextlib import asynccontextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 logger = logging.getLogger(__name__)
 
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+engine = create_async_engine(DATABASE_URL)
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=True, bind=engine, class_=AsyncSession
+)
 
 Base = declarative_base()
 
 
-def get_db_session():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db_session():
+    async with SessionLocal() as session:
+        try:
+            yield session
+        except Exception as e:
+            await session.rollback()
+            logger.error(f"Error: {e}")
+            raise e
+        finally:
+            session.close()
 
 
-db_context = contextmanager(get_db_session)
+db_context = asynccontextmanager(get_db_session)
