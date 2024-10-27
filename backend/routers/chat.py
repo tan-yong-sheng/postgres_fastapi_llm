@@ -9,9 +9,22 @@ from backend.jwt_services import current_user
 from backend.schemas.message_schemas import AIResponseSchema, MessageRequestSchema
 from backend.schemas.user_schemas import UserResponseSchema
 from backend.utils.chat_completions_handler import get_openai_response
+from backend.utils.chat_session_handler import load_previous_chat_session
 
 chat_router = APIRouter()
 
+@chat_router.get("/") # , response_model = list[Union[MessageResponseSchema, AIResponseSchema]])
+async def get_chat_history_in_single_session(session_id: int, 
+                        user: UserResponseSchema = Depends(current_user),  
+                        db_session: AsyncSession = Depends(get_db_session)):
+    # get historical chat messages by session_id and user_id
+    try:
+        all_messages = await load_previous_chat_session(session_id, user.id, db_session)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+    return all_messages
 
 # bug: need to break it down ...
 @chat_router.post("/send-message", response_model=AIResponseSchema)
@@ -31,7 +44,7 @@ async def send_message(
 
         # Fetch the last 5 messages for context - helps maintain continuity
         stmt = (
-            select(MessageOrm.user_id, MessageOrm.message)
+            select(MessageOrm.user_id, MessageOrm.content)
             .where(MessageOrm.session_id == request.session_id)
             .order_by(desc(MessageOrm.created_at))
             .limit(5)

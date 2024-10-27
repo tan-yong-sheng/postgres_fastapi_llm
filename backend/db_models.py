@@ -64,7 +64,7 @@ class MessageOrm(Base):
         nullable=False,
     )
     role = Column(String, nullable=False)
-    message = Column(TEXT, nullable=False)
+    content = Column(TEXT, nullable=False)
     created_at = Column(
         DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
     )

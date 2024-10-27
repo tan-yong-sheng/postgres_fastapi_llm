@@ -1,9 +1,9 @@
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.db_models import MessageOrm
-import streamlit as st
+from sqlalchemy.exc import SQLAlchemyError
 
-async def load_previous_chat_session(session_id: int, db_session: AsyncSession) -> None:
+async def load_previous_chat_session(session_id: int, user_id: int, db_session: AsyncSession) -> list:
     """
     Load messages of a previous chat session from the database and append to Streamlit's
     session state "messages".
@@ -16,18 +16,20 @@ async def load_previous_chat_session(session_id: int, db_session: AsyncSession) 
         None. Messages are loaded into `st.session_state.messages`.
     """
     try:
-        stmt = select(MessageOrm.role, MessageOrm.content).where(MessageOrm.session_id == session_id)
+        stmt = select(MessageOrm.role, MessageOrm.content).where(
+            (MessageOrm.session_id == session_id) & (MessageOrm.user_id == user_id))
         result = await db_session.execute(stmt)
         all_messages = result.fetchall()
 
-        st.session_state.messages = []
-        for role, content in all_messages:
-            st.session_state.messages.append({"role": role, "content": content})
+        if not all_messages:
+            return
+
+        return all_messages
 
     except SQLAlchemyError as error:
-        st.error(f"Failed to load previous chat sessions: {error}")
-        raise
+        raise Exception(f"Failed to load previous chat sessions: {error}")
 
     except Exception as error:
-        st.error(f"Unexpected error occured: {error}")
-        raise
+        raise Exception(f"Unexpected error occured: {error}")
+
+    
