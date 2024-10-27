@@ -6,7 +6,9 @@ import openai
 # not perfect as it's just combining the last 5 messages, and feed it to the model...
 # The model doesn't know it's previous conversation
 def get_openai_response(message: str, user_id: str) -> str:
-    openai_client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    openai_client = openai.OpenAI(
+                    api_key=os.getenv("OPENAI_API_KEY"), 
+                    base_url=os.getenv("OPENAI_BASE_URL"))
     response = openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": message}],
