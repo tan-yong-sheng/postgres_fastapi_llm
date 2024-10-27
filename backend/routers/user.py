@@ -31,7 +31,7 @@ async def register_user(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"{e}: Internal server error.")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
     return await create_token(user_obj, db_session)
 

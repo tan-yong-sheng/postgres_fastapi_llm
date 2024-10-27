@@ -23,7 +23,7 @@ async def get_chat_history_in_single_session(session_id: int,
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     return all_messages
 
 # bug: need to break it down ...
@@ -53,17 +53,16 @@ async def send_message(
         recent_messages = result.fetchall()
 
         # Building context from recent messages
-        print(recent_messages)
         context = " ".join([message[1] for message in recent_messages])
 
         # Forming a context-rich prompt for the LLM
-        full_prompt = f"{context} User: {request.message}"
+        full_prompt = f"{context} User: {request.content}"
         # Logging the conversation
         user_message_obj = MessageOrm(
             user_id=user.id,
             session_id=request.session_id,
-            role="User",
-            message=request.message,
+            role="user",
+            content=request.content,
         )
         db_session.add(user_message_obj)
 
@@ -74,8 +73,8 @@ async def send_message(
         AI_message_obj = MessageOrm(
             user_id=user.id,
             session_id=request.session_id,
-            role="AI",
-            message=ai_response,  # Corrected to use AI response
+            role="assistant",
+            content=ai_response,  # Corrected to use AI response
         )
         db_session.add(AI_message_obj)
         await db_session.commit()

@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 # Define Pydantic models for request and response data
 class MessageSchema(BaseModel):
-    message: str
+    content: str
 
 
 class MessageRequestSchema(MessageSchema):

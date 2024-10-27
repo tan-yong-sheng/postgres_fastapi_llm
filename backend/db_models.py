@@ -71,5 +71,5 @@ class MessageOrm(Base):
     deleted_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     __tableargs__ = {
-        CheckConstraint("LENGTH(message)>0", name="check__message__message_length"),
+        CheckConstraint("LENGTH(content)>0", name="check__message__content_length"),
     }

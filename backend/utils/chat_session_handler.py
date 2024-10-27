@@ -1,7 +1,9 @@
+from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.db_models import MessageOrm
 from sqlalchemy.exc import SQLAlchemyError
+
 
 async def load_previous_chat_session(session_id: int, user_id: int, db_session: AsyncSession) -> list:
     """
@@ -12,8 +14,6 @@ async def load_previous_chat_session(session_id: int, user_id: int, db_session: 
         session_id: The ID of the chat session to retrieve messages from.
         db_session: An asynchronous database session object.
 
-    Returns:
-        None. Messages are loaded into `st.session_state.messages`.
     """
     try:
         stmt = select(MessageOrm.role, MessageOrm.content).where(
@@ -22,14 +22,13 @@ async def load_previous_chat_session(session_id: int, user_id: int, db_session: 
         all_messages = result.fetchall()
 
         if not all_messages:
-            return
+            raise HTTPException(status_code=404, detail="Chat session not found")
 
+        # Transform the results into a list of dictionaries
+        all_messages = [{"role": role, "content": content} for role, content in all_messages]
         return all_messages
 
-    except SQLAlchemyError as error:
-        raise Exception(f"Failed to load previous chat sessions: {error}")
-
-    except Exception as error:
-        raise Exception(f"Unexpected error occured: {error}")
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=404, detail=f"Failed to load previous chat sessions: {str(e)}")
 
     
