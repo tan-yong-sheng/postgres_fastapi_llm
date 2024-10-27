@@ -8,7 +8,7 @@ from backend.db_models import MessageOrm, SessionOrm
 from backend.jwt_services import current_user
 from backend.schemas.message_schemas import AIResponseSchema, MessageRequestSchema
 from backend.schemas.user_schemas import UserResponseSchema
-from backend.utils.openai_chat_handler import get_openai_response
+from backend.utils.chat_completions_handler import get_openai_response
 
 chat_router = APIRouter()
 

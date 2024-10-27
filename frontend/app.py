@@ -1,6 +1,5 @@
 import json
 import os
-
 import requests
 import streamlit as st
 from dotenv import find_dotenv, load_dotenv
@@ -16,7 +15,6 @@ if "current_user" not in st.session_state:
     st.session_state.current_user = ""
 if "access_token" not in st.session_state:
     st.session_state.jwt_token = ""
-
 
 def login_user(username: str, password: str):
     """Fetches a JWT token from the FastAPI server."""
