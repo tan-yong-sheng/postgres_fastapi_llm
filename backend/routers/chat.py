@@ -1,3 +1,4 @@
+from typing import Optional, Union
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -6,14 +7,14 @@ from sqlalchemy.sql.expression import desc
 from backend.db_connection import get_db_session
 from backend.db_models import MessageOrm, SessionOrm
 from backend.jwt_services import current_user
-from backend.schemas.message_schemas import AIResponseSchema, MessageRequestSchema
+from backend.schemas.message_schemas import AIMessageResponseSchema, MessageRequestSchema
 from backend.schemas.user_schemas import UserResponseSchema
 from backend.utils.chat_completions_handler import get_openai_response
 from backend.utils.chat_session_handler import load_previous_chat_session
 
 chat_router = APIRouter()
 
-@chat_router.get("/") # , response_model = list[Union[MessageResponseSchema, AIResponseSchema]])
+@chat_router.get("/", response_model = Optional[list[AIMessageResponseSchema]])
 async def get_chat_history_in_single_session(session_id: int, 
                         user: UserResponseSchema = Depends(current_user),  
                         db_session: AsyncSession = Depends(get_db_session)):
@@ -27,7 +28,7 @@ async def get_chat_history_in_single_session(session_id: int,
     return all_messages
 
 # bug: need to break it down ...
-@chat_router.post("/send-message", response_model=AIResponseSchema)
+@chat_router.post("/send-message", response_model=AIMessageResponseSchema)
 async def send_message(
     request: MessageRequestSchema,
     user: UserResponseSchema = Depends(current_user),
@@ -61,7 +62,7 @@ async def send_message(
         user_message_obj = MessageOrm(
             user_id=user.id,
             session_id=request.session_id,
-            role="user",
+            role=request.role,
             content=request.content,
         )
         db_session.add(user_message_obj)
@@ -73,16 +74,18 @@ async def send_message(
         AI_message_obj = MessageOrm(
             user_id=user.id,
             session_id=request.session_id,
-            role="assistant",
-            content=ai_response,  # Corrected to use AI response
+            role=ai_response.role,
+            content=ai_response.content,
         )
         db_session.add(AI_message_obj)
         await db_session.commit()
         # await db_session.refresh(AI_message_obj)
+        return AIMessageResponseSchema(
+                                content=ai_response.content,
+                                role=ai_response.role,
+                                session_id=request.session_id)
 
-        return AIResponseSchema(ai_response=ai_response, session_id=request.session_id)
     except HTTPException:
         raise
     except Exception as e:
-        # Consider more specific exception handling and logging
         raise HTTPException(status_code=500, detail=str(e))

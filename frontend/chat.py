@@ -5,33 +5,8 @@ import openai
 import streamlit as st
 from dotenv import find_dotenv, load_dotenv
 
+
 _ = load_dotenv(find_dotenv())
-
-
-@dataclass
-class Message:
-    actor: str
-    payload: str
-
-
-@st.cache_resource
-def get_openai_api_key() -> str:
-    return os.getenv("OPENAI_API_KEY")
-
-
-# bug: not included chat_history
-def get_openai_response(message: str, chat_history: str) -> str:
-    openai_client = openai.OpenAI(api_key=get_openai_api_key())
-    response = openai_client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "user", "content": message}],
-    )
-    return response.choices[0].message.content
-
-
-USER = "user"
-ASSISTANT = "ai"
-MESSAGES = "messages"
 
 
 def initialize_session_state():
