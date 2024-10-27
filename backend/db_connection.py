@@ -1,12 +1,13 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv, find_dotenv
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
+_ = load_dotenv(find_dotenv())
 logger = logging.getLogger(__name__)
-
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 engine = create_async_engine(DATABASE_URL)

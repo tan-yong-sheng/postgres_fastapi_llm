@@ -2,7 +2,6 @@ import os
 
 import openai
 
-
 # not perfect as it's just combining the last 5 messages, and feed it to the model...
 # The model doesn't know it's previous conversation
 def get_openai_response(message: str, user_id: str) -> str:

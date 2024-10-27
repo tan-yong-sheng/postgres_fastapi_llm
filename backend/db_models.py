@@ -73,9 +73,3 @@ class MessageOrm(Base):
     __tableargs__ = {
         CheckConstraint("LENGTH(message)>0", name="check__message__message_length"),
     }
-
-
-if __name__ == "__main__":
-    from backend.db_connection import engine
-
-    Base.metadata.create_all(bind=engine)
