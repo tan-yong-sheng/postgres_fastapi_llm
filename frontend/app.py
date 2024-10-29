@@ -18,7 +18,7 @@ if "access_token" not in st.session_state:
 
 def login_user(username: str, password: str):
     """Fetches a JWT token from the FastAPI server."""
-    url = f"{BACKEND_BASE_URL}/api/v1/login"
+    url = f"{BACKEND_BASE_URL}/api/v1/users/login"
     response = requests.post(
         url,
         data={
@@ -40,7 +40,7 @@ def login_user(username: str, password: str):
 
 def register_user(username: str, email: EmailStr, password: str):
     """Register a user with the FastAPI server."""
-    url = f"{BACKEND_BASE_URL}/api/v1/users"
+    url = f"{BACKEND_BASE_URL}/api/v1/users/register"
     response = requests.post(
         url,
         data=json.dumps(
@@ -103,11 +103,11 @@ navigation_tree = {
 }
 
 # get current user profile with JWT token
-user = requests.get(
-    f"{BACKEND_BASE_URL}/api/users/current-user",
-    headers={"authorization": f"Bearer {st.session_state.access_token}"},
-)
-user_claims = user.json()
+#user = requests.get(
+#    f"{BACKEND_BASE_URL}/api/v1/users/current-user",
+#    headers={"authorization": f"Bearer {st.session_state.access_token}"},
+#)
+#user_claims = user.json()
 
 with st.sidebar:
     if st.button("Logout"):
