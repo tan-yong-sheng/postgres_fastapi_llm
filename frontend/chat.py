@@ -10,10 +10,8 @@ from dotenv import find_dotenv, load_dotenv
 
 _ = load_dotenv(find_dotenv())
 
+session_id = 1 # can try to call API via ``
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
-
-print(st.session_state.access_token)
-print("====1")
 
 @dataclass
 class Message:
@@ -49,12 +47,11 @@ if prompt:
         chat_history = "\n".join(
             [f"{m.actor}: {m.payload}" for m in st.session_state[MESSAGES]]
         )
-        # BUG: need amendment ... because jwt token authentication...
         response: str = requests.post(f"{BACKEND_BASE_URL}/api/v1/chat/send-message", 
                                     data=json.dumps({
                                             "content": prompt,
                                             "role": "user",
-                                            "session_id": None
+                                            "session_id": session_id
                                             }),
                                     headers={'authorization': f"Bearer {st.session_state.access_token}"})
         ai_response = str(response.json()["content"])

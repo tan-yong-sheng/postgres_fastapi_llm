@@ -11,12 +11,12 @@ class MessageSchema(BaseModel):
 
 class MessageRequestSchema(MessageSchema):
     role: str = "user"
-    session_id: Optional[int] = None
+    session_id: int
 
 
 class AIMessageResponseSchema(MessageSchema):
     role: str = "assistant"
-    session_id: Optional[int] = None
+    session_id: int
 
 
 class RawMessageRequestSchema(MessageSchema):
