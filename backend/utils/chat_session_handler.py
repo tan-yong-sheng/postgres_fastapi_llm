@@ -32,11 +32,11 @@ async def _get_all_chat_sessions(user_id: int, db_session: AsyncSession) -> list
                 detail="No existing chat sessions found - are you a new user?")
 
         # Transform the results into a list of dictionaries
-        all_sessions = [{"session_id": session_id,
-                        "user_id": user_id,
-                        "start_timestamp": start_timestamp,
+        all_sessions = [{"session_id": session[0],
+                        "user_id": session[1],
+                        "start_timestamp": session[2],
                         } 
-                        for session_id, user_id, start_timestamp in all_sessions]
+                        for session in all_sessions]
         return all_sessions
 
     except SQLAlchemyError as e:
@@ -77,7 +77,7 @@ async def _get_chat_history_by_session_id(session_id: int, user_id: int, db_sess
         # Transform the results into a list of dictionaries
         if not all_messages:
             return []
-        all_messages = [{"role": role, "content": content} for role, content in all_messages]
+        all_messages = [{"role": message[0], "content": message[1]} for message in all_messages]
         return all_messages
     except SQLAlchemyError as e:
         raise HTTPException(status_code=404, detail=f"Failed to load previous chat messages for the session: {str(e)}")

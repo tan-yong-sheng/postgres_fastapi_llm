@@ -54,6 +54,7 @@ if prompt:
                                             "session_id": session_id
                                             }),
                                     headers={'authorization': f"Bearer {st.session_state.access_token}"})
+        _ = response.raise_for_status()
         ai_response = str(response.json()["content"])
         st.session_state[MESSAGES].append(Message(actor=ASSISTANT, payload=ai_response))
         st.chat_message(ASSISTANT).write(ai_response)

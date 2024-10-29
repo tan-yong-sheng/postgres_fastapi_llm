@@ -66,7 +66,7 @@ async def send_message(
     try:
         messages_list = [{"role": request.role, "content": request.content}]
         if request.session_id:
-            messages_list = await _get_chat_history_in_single_session(
+            messages_list = await _get_chat_history_by_session_id(
                                 request.session_id, user.id, db_session)
             messages_list.append({"role": request.role, "content": request.content})
 
