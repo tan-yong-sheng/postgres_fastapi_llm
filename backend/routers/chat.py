@@ -1,11 +1,12 @@
-from typing import Optional, Union
+from typing import Optional, Union, Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql.expression import desc
+from pydantic import UUID4
 
 from backend.db_connection import get_db_session
-from backend.db_models import MessageOrm, SessionOrm
+from backend.db_models import MessageOrm
 from backend.jwt_services import current_user
 from backend.schemas.message_schemas import AIMessageResponseSchema, MessageRequestSchema, RawAIMessageResponseSchema
 from backend.schemas.user_schemas import UserResponseSchema
@@ -16,7 +17,6 @@ from backend.utils.chat_session_handler import (_get_all_chat_sessions,
                                             _create_new_chat_session)
 
 chat_router = APIRouter()
-
 
 @chat_router.get("/sessions", response_model = list[ChatSessionResponseSchema])
 async def get_all_chat_sessions(user: UserResponseSchema=Depends(current_user), 
@@ -30,7 +30,7 @@ async def get_all_chat_sessions(user: UserResponseSchema=Depends(current_user),
     return all_sessions
         
 @chat_router.get("/{session_id}", response_model = Optional[list[RawAIMessageResponseSchema]])
-async def get_chat_history_by_session_id(session_id: int, 
+async def get_chat_history_by_session_id(session_id: str, 
                         user: UserResponseSchema = Depends(current_user),  
                         db_session: AsyncSession = Depends(get_db_session)):
     # get historical chat messages by session_id and user_id
@@ -44,7 +44,7 @@ async def get_chat_history_by_session_id(session_id: int,
     return all_messages
 
 
-@chat_router.post("/new-session")
+@chat_router.post("/new-session", response_model = ChatSessionResponseSchema)
 async def create_new_chat_session(user: UserResponseSchema=Depends(current_user),
                             db_session: AsyncSession=Depends(get_db_session)):
     try:

@@ -17,8 +17,8 @@ Table user {
 Table session {
     session_id INT [pk, increment]
     user_id INT [ref: > user.id]
-    start_timestamp TIMESTAMP [default: "CURRENT_TIMESTAMP"]
-    end_timestamp TIMESTAMP
+    created_at TIMESTAMP [default: "CURRENT_TIMESTAMP"]
+
 }
 
 Table message {

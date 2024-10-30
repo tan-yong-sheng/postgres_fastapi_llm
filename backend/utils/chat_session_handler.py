@@ -1,17 +1,25 @@
 from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
+from pydantic import UUID4
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import asyncpg  # Import specific asyncpg error
-from backend.db_models import MessageOrm, SessionOrm
+from backend.db_models import MessageOrm, ChatSessionOrm
 from sqlalchemy.exc import SQLAlchemyError, NoResultFound
 from sqlalchemy.sql import asc, desc
+from typing import Annotated
+
 
 async def _create_new_chat_session(user_id: int, db_session: AsyncSession):
     try:
-        session_obj = SessionOrm(user_id=user_id)
+        session_obj = ChatSessionOrm(user_id=user_id)
         db_session.add(session_obj)
         await db_session.commit()
         await db_session.refresh(session_obj)
+        session_obj = {"session_id": session_obj.id, 
+                        "user_id": session_obj.user_id,
+                        "created_at": session_obj.created_at}
+        session_obj = jsonable_encoder(session_obj)
         return session_obj
     except SQLAlchemyError as e:
         raise HTTPException(status_code=404, detail=f"Failed to create a new chat session: {str(e)}")
@@ -19,11 +27,11 @@ async def _create_new_chat_session(user_id: int, db_session: AsyncSession):
 
 async def _get_all_chat_sessions(user_id: int, db_session: AsyncSession) -> list:
     try:
-        stmt = select(SessionOrm.id, SessionOrm.user_id, 
-                    SessionOrm.start_timestamp, 
+        stmt = select(ChatSessionOrm.id, ChatSessionOrm.user_id, 
+                    ChatSessionOrm.created_at, 
                     ).where(
-                    (SessionOrm.user_id == user_id)
-                    ).order_by(desc(SessionOrm.start_timestamp))
+                    (ChatSessionOrm.user_id == user_id)
+                    ).order_by(desc(ChatSessionOrm.created_at))
         result = await db_session.execute(stmt)
         all_sessions = result.fetchall()
 
@@ -34,20 +42,21 @@ async def _get_all_chat_sessions(user_id: int, db_session: AsyncSession) -> list
         # Transform the results into a list of dictionaries
         all_sessions = [{"session_id": session[0],
                         "user_id": session[1],
-                        "start_timestamp": session[2],
+                        "created_at": session[2],
                         } 
                         for session in all_sessions]
+        all_sessions = jsonable_encoder(all_sessions)
         return all_sessions
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=404, detail=f"Failed to load previous chat sessions: {str(e)}")
 
-async def _check_existing_chat_session(session_id: int, user_id: int, db_session: AsyncSession):
+async def _check_existing_chat_session(session_id: str, user_id: int, db_session: AsyncSession):
     try:
-        stmt = select(SessionOrm.id, SessionOrm.user_id, 
-                    SessionOrm.start_timestamp,
+        stmt = select(ChatSessionOrm.id, ChatSessionOrm.user_id, 
+                    ChatSessionOrm.created_at,
                     ).where(
-                    ((SessionOrm.user_id == user_id) & (SessionOrm.id == session_id)))
+                    ((ChatSessionOrm.user_id == user_id) & (ChatSessionOrm.id == session_id)))
         result = await db_session.execute(stmt)
         chat_session = result.scalars().first()
         if not chat_session:
@@ -56,7 +65,7 @@ async def _check_existing_chat_session(session_id: int, user_id: int, db_session
         raise HTTPException(status_code=404, detail=f"No chat session found. Please double check the session_id for the chat: {str(e)}")
 
 
-async def _get_chat_history_by_session_id(session_id: int, user_id: int, db_session: AsyncSession) -> list:
+async def _get_chat_history_by_session_id(session_id: str, user_id: int, db_session: AsyncSession) -> list:
     """
     Load messages of a previous chat session from the database and append to Streamlit's
     session state "messages".

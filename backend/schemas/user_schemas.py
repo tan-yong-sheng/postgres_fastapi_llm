@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated, Optional
 
-from pydantic import BaseModel, EmailStr, StringConstraints
+from pydantic import BaseModel, EmailStr, StringConstraints, UUID4
 
 
 class UserSchema(BaseModel):
@@ -20,13 +20,13 @@ class UserRequestSchema(UserSchema):
 
 
 class UserResponseSchema(UserSchema):
-    id: int
+    id: UUID4
     created_at: datetime
     deleted_at: Optional[datetime] = None
 
 
 class UserDeleteSchema(UserSchema):
-    id: int
+    id: UUID4
     created_at: datetime
     deleted_at: datetime
 

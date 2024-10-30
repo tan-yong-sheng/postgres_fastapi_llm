@@ -1,9 +1,10 @@
 import datetime
 
 import passlib.hash
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, text
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
 from sqlalchemy.types import TEXT, DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
 
 from backend.db_connection import Base
 
@@ -11,12 +12,19 @@ from backend.db_connection import Base
 class UserOrm(Base):
     __tablename__ = "user"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(
+        UUID(as_uuid=True),
+        nullable=False,
+        primary_key=True,
+        server_default=text("uuid_generate_v4()"),
+    )
     username = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     created_at = Column(
-        DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
+        DateTime(timezone=True), 
+        default=datetime.datetime.now(),
+        server_default=text("CURRENT_TIMESTAMP")
     )
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -34,33 +42,36 @@ class UserOrm(Base):
         return passlib.hash.bcrypt.verify(password, self.password_hash)
 
 
-class SessionOrm(Base):
-    __tablename__ = "session"
+class ChatSessionOrm(Base):
+    __tablename__ = "chat_session"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(
+            UUID(as_uuid=True),
+            nullable=False,
+            primary_key=True,
+            server_default=text("uuid_generate_v4()"),
+        )
     user_id = Column(
-        Integer,
+        UUID,
         ForeignKey("user.id", ondelete="cascade", name="fk__session__user_id"),
         nullable=False,
     )
-    start_timestamp = Column(
+    created_at = Column(
         DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
     )
-    end_timestamp = Column(DateTime(timezone=True), nullable=True, default=None)
-
 
 class MessageOrm(Base):
     __tablename__ = "message"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(
-        Integer,
+        UUID,
         ForeignKey("user.id", ondelete="cascade", name="fk__message__user_id"),
         nullable=False,
     )
     session_id = Column(
-        Integer,
-        ForeignKey("session.id", ondelete="cascade", name="fk__message__session_id"),
+        UUID,
+        ForeignKey("chat_session.id", ondelete="cascade", name="fk__message__session_id"),
         nullable=False,
     )
     role = Column(String, nullable=False)

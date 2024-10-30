@@ -1,21 +1,25 @@
 import os
 
 import jwt
+import json
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 
 from backend.db_connection import get_db_session
 from backend.db_models import UserOrm
 from backend.schemas.user_schemas import UserResponseSchema
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=os.getenv("AUTH_TOKEN_URL"))
 
 
 async def create_token(user: UserOrm, db_session: AsyncSession):
     user_schema = UserResponseSchema.model_validate(user.__dict__)
-    user_dict = dict(user_schema)
+    user_dict = jsonable_encoder(user_schema)
     del user_dict["created_at"]
     token = jwt.encode(user_dict, os.getenv("_JWT_SECRET_KEY"))
     return dict(access_token=token, token_type="bearer")

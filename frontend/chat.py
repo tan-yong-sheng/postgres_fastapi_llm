@@ -1,60 +1,42 @@
-import os
-from dataclasses import dataclass
-import requests
-import json
-
-import openai
 import streamlit as st
-from dotenv import find_dotenv, load_dotenv
+from dotenv import load_dotenv, find_dotenv
+from config import settings
+from utils.msg_mgmt import (display_messages,
+                            add_user_message,
+                            fetch_response,
+                            add_assistant_message
+                    )
 
+def main(session_id: str):
 
-_ = load_dotenv(find_dotenv())
-
-session_id = 1 # can try to call API via ``
-BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
-
-@dataclass
-class Message:
-    actor: str
-    payload: str
-
-
-USER = "user"
-ASSISTANT = "ai"
-MESSAGES = "messages"
-
-def initialize_session_state():
-    if MESSAGES not in st.session_state:
-        st.session_state[MESSAGES] = [
-            Message(actor=ASSISTANT, payload="Hi! How can I help you?")
-        ]
-
-
-initialize_session_state()
-
-msg: Message
-for msg in st.session_state[MESSAGES]:
-    st.chat_message(msg.actor).write(msg.payload)
-
-prompt: str = st.chat_input("Enter a prompt here")
-
-# Bug: don't create session_id or continue to certain session..
-if prompt:
-    st.session_state[MESSAGES].append(Message(actor=USER, payload=prompt))
-    st.chat_message(USER).write(prompt)
-
-    with st.spinner("Please wait.."):
-        chat_history = "\n".join(
-            [f"{m.actor}: {m.payload}" for m in st.session_state[MESSAGES]]
+    with st.sidebar:
+        c1, c2 = st.columns(2)
+        create_chat_button = c1.button(
+            "新建", use_container_width=True, key="create_chat_button"
         )
-        response: str = requests.post(f"{BACKEND_BASE_URL}/api/v1/chat/send-message", 
-                                    data=json.dumps({
-                                            "content": prompt,
-                                            "role": "user",
-                                            "session_id": session_id
-                                            }),
-                                    headers={'authorization': f"Bearer {st.session_state.access_token}"})
-        _ = response.raise_for_status()
-        ai_response = str(response.json()["content"])
-        st.session_state[MESSAGES].append(Message(actor=ASSISTANT, payload=ai_response))
-        st.chat_message(ASSISTANT).write(ai_response)
+        if create_chat_button:
+            st.write("Hello, you clicked the button...")
+            #st.rerun()
+
+    # Initialize messages in session state if not already done
+    if settings.MESSAGES not in st.session_state:
+        st.session_state[settings.MESSAGES] = []
+
+    display_messages()
+
+    # Get user input
+    prompt = st.chat_input("Enter a prompt here")
+
+    # Process the user's prompt if it exists
+    if prompt:
+        _ = add_user_message(prompt)
+
+        # Show loading spinner while processing
+        with st.spinner("Please wait.."):
+            ai_response = fetch_response(prompt, session_id)
+            _ = add_assistant_message(ai_response)
+
+
+# Example usage: replace 'session_id' with your actual session identifier
+session_id = "00e698ee-0870-4faf-b18d-68dc141f591a"  # Replace with dynamic session ID handling as needed
+main(session_id)
