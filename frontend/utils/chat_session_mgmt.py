@@ -34,9 +34,9 @@ def _get_all_chat_sessions():
     url = f"{BACKEND_BASE_URL}/api/v1/chat/sessions"
     headers = {'Authorization': f'Bearer {st.session_state.access_token}'}
     response = requests.get(url, headers=headers)
-    response.raise_for_status()
-    return response.json()
-
+    _ = response.raise_for_status()
+    session_data = response.json()
+    return session_data
 
 # Initialize Session State
 def _initialize_session_state():
