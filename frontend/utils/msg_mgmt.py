@@ -5,26 +5,34 @@ import streamlit as st
 from dotenv import load_dotenv, find_dotenv
 
 from config import settings
-from schemas import RawMessageRequestSchema, RawAIMessageResponseSchema
+from schemas import MessageSchema
 
 
 _ = load_dotenv(find_dotenv())
 BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
 
 
-def display_messages():
-    """Displays all messages from the session state."""
-    for msg in st.session_state[settings.MESSAGES]:
-        st.chat_message(msg.role).write(msg.content)
+def _get_all_messages_in_chat_session(session_id: str) -> list[MessageSchema]:
+    """
+    Fetch and display chat messages for a given session_id.
+    """
+    try:
+        url = f"{BACKEND_BASE_URL}/api/v1/chat/{session_id}"
+        response = requests.get(
+            url,
+            headers={'authorization': f'Bearer {st.session_state.access_token}'}
+        )
+        response.raise_for_status()
+        # Extract messages from the response
+        messages = response.json()
+        return messages
+    except requests.exceptions.HTTPError as e:
+        st.error(f"Failed to fetch messages: {e}")
+    except Exception as e:
+        st.error(f"An unexpected error occurred: {e}")
 
 
-def add_user_message(prompt: str):
-    """Adds a user's message to the session state and displays it."""
-    st.session_state[settings.MESSAGES].append(RawMessageRequestSchema(role=settings.USER, content=prompt))
-    st.chat_message(settings.USER).write(prompt)
-
-
-def fetch_response(prompt: str, session_id: str) -> str:
+def _fetch_assistant_response(prompt: str, session_id: str) -> str:
     """Sends a prompt to the backend and retrieves the assistant's response."""
     try:
         response = requests.post(
@@ -33,14 +41,11 @@ def fetch_response(prompt: str, session_id: str) -> str:
             headers={'authorization': f"Bearer {st.session_state.access_token}"}
         )
         _ = response.raise_for_status()
+        return str(response.json()["content"])
     except requests.exceptions.HTTPError as e:
         raise Exception(f"HTTP error: {e}")
     except Exception as e:
         raise Exception(f"Internal server error: {e}")
-    return str(response.json()["content"])
+    
 
 
-def add_assistant_message(response: str):
-    """Adds the assistant's response to the session state and displays it."""
-    st.session_state[settings.MESSAGES].append(RawAIMessageResponseSchema(role=settings.ASSISTANT, content=response))
-    st.chat_message(settings.ASSISTANT).write(response)

@@ -39,9 +39,9 @@ if not (st.session_state.current_user and st.session_state.access_token):
 
 navigation_tree = {
     "Main": [
-        st.Page("home.py", title="Home", icon=":material/home:"),
-        st.Page("news.py", title="News", icon=":material/newspaper:"),
-        st.Page("chat.py", title="Chat", icon=":material/chat:"),
+        st.Page("home_view.py", title="Home", icon=":material/home:"),
+        st.Page("news_view.py", title="News", icon=":material/newspaper:"),
+        st.Page("chat_view.py", title="Chat", icon=":material/chat:"),
     ],
 }
 
