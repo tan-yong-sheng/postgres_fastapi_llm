@@ -22,16 +22,16 @@ def _get_all_messages_in_chat_session(session_id: str) -> list[MessageSchema]:
             url,
             headers={'authorization': f'Bearer {st.session_state.access_token}'}
         )
-        response.raise_for_status()
-        # Extract messages from the response
-        messages = response.json()
-        return messages
+        _ = response.raise_for_status()
+        message_list = response.json()
+        return message_list
     except requests.exceptions.HTTPError as e:
         st.error(f"Failed to fetch messages: {e}")
     except Exception as e:
         st.error(f"An unexpected error occurred: {e}")
 
 
+# Bug: don't like how this write..., it should return in format of MessageSchema instead for consistency ...
 def _fetch_assistant_response(prompt: str, session_id: str) -> str:
     """Sends a prompt to the backend and retrieves the assistant's response."""
     try:

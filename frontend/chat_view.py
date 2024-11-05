@@ -1,5 +1,7 @@
 import os
+from typing import Optional
 import uuid
+
 import requests
 import streamlit as st
 from dotenv import load_dotenv, find_dotenv
@@ -44,19 +46,24 @@ def add_assistant_message_to_ui(response: str):
     st.session_state[settings.MESSAGES].append(RawAIMessageResponseSchema(role=settings.ASSISTANT, content=response))
     st.chat_message(settings.ASSISTANT).write(response)
 
+def display_chat_sessions_to_ui():
+    try:
+        sessions_data = _get_all_chat_sessions()
+        for session_data in sessions_data:
+            chat_name = f"New Chat_{session_data['session_id']}"
+            st.session_state["chat_sessions"].append(chat_name)
+            st.session_state["active_chat_index"] = 0
+    except Exception:
+        return
 
-def display_chat_sessions_to_ui(user_id):
-    return _get_all_chat_sessions()
-
-
-def display_messages_to_ui(messages: list[MessageSchema]):
+def display_messages_to_ui(messages: list[Optional[MessageSchema]]):
     """
     Fetch and display chat messages for a given session_id.
     """
+    if len(messages) > 0:
     # Display each message in the chat history
-    for message in messages:
-        st.chat_message(message["role"]).write(message['content'])
-
+        for message in messages:
+            st.chat_message(message["role"]).write(message['content'])
 
 def main():
     # Initialize chat session state
@@ -65,6 +72,10 @@ def main():
     # Sidebar for chat session management
     with st.sidebar:
         st.title("Chat Sessions")
+        # display all chat session
+
+        if "chat_sessions" in st.session_state:
+            _ = display_chat_sessions_to_ui()
 
         # Button to start a new chat session
         if st.button("Start New Chat"):

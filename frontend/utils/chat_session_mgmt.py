@@ -29,7 +29,7 @@ def _create_new_chat_session():
         raise Exception(f"Internal server error: {e}")
 
 
-def _get_all_chat_sessions(user_id: str, session_id: str):
+def _get_all_chat_sessions():
     """Retrieve all chat sessions for the user."""
     url = f"{BACKEND_BASE_URL}/api/v1/chat/sessions"
     headers = {'Authorization': f'Bearer {st.session_state.access_token}'}
@@ -45,3 +45,5 @@ def _initialize_session_state():
         st.session_state["chat_sessions"] = []
     if "active_chat_index" not in st.session_state:
         st.session_state["active_chat_index"] = 0
+    if "messages" not in st.session_state:
+        st.session_state["messages"] = []
