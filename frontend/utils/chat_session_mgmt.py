@@ -12,7 +12,7 @@ BACKEND_BASE_URL = os.getenv("BACKEND_BASE_URL")
 
 
 # Chat Session Management
-def _create_new_chat_session():
+def _create_new_chat_session() -> dict:
     """Starts a new chat session by calling the backend API and returns the session ID."""
     try:
         url = f"{BACKEND_BASE_URL}/api/v1/chat/new-session"
@@ -29,7 +29,7 @@ def _create_new_chat_session():
         raise Exception(f"Internal server error: {e}")
 
 
-def _get_all_chat_sessions():
+def _get_all_chat_sessions() -> dict:
     """Retrieve all chat sessions for the user."""
     url = f"{BACKEND_BASE_URL}/api/v1/chat/sessions"
     headers = {'Authorization': f'Bearer {st.session_state.access_token}'}
@@ -38,12 +38,16 @@ def _get_all_chat_sessions():
     session_data = response.json()
     return session_data
 
+
 # Initialize Session State
 def _initialize_session_state():
     """Initialize session state variables."""
-    if "chat_sessions" not in st.session_state:
-        st.session_state["chat_sessions"] = []
-    if "active_chat_index" not in st.session_state:
-        st.session_state["active_chat_index"] = 0
     if "messages" not in st.session_state:
         st.session_state["messages"] = []
+    if "chat_session" not in st.session_state:
+        session_data = _create_new_chat_session()
+        # update session_id for current chat session
+        st.session_state["chat_session"] = {"session_id": session_data["session_id"]}
+    if "sessions_history" not in st.session_state:
+        sessions_list = _get_all_chat_sessions() 
+        st.session_state["sessions_history"] = [session["session_id"] for session in sessions_list]
