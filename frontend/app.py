@@ -39,8 +39,8 @@ if not (st.session_state.current_user and st.session_state.access_token):
 
 navigation_tree = {
     "Main": [
-        st.Page("news_view.py", title="News", icon=":material/newspaper:"),
-        st.Page("chat_view.py", title="Chat", icon=":material/chat:"),
+        st.Page("views/news_view.py", title="News", icon=":material/newspaper:"),
+        st.Page("views/chat_view.py", title="Chat", icon=":material/chat:"),
     ],
 }
 
@@ -51,7 +51,7 @@ navigation_tree = {
 #)
 #user_claims = user.json()
 
-#with st.topbar:
+#with st.sidebar:
 #    if st.button("Logout"):
 #        st.session_state.current_user = ""
 #        st.session_state.jwt_token = ""

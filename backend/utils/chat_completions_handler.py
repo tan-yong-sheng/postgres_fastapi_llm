@@ -14,9 +14,5 @@ def get_openai_response(messages: list[RawMessageRequestSchema], user_id: str) -
         messages=messages,
         temperature=0.7,
         top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0,
-        store=True,
-        metadata={"user_id": str(user_id)},
     )
     return response.choices[0].message

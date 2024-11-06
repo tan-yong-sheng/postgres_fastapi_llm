@@ -73,7 +73,6 @@ def display_chat_sessions_to_ui():
                     #st.session_state["active_chat_index"] = i
 
 
-
 def main():
     # Initialize chat session state if not already done
     _ = _initialize_session_state()
@@ -95,7 +94,8 @@ def main():
             _ = display_historical_messages_to_ui(messages_list)
 
     if "sessions_history" in st.session_state:
-        _ = display_chat_sessions_to_ui()
+        pass
+        #_ = display_chat_sessions_to_ui()
 
     # User input for new messages (without creating new sessions on submit)
     user_input = st.chat_input("Enter your message here")
