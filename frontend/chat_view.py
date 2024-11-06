@@ -56,23 +56,22 @@ def display_historical_messages_to_ui(messages: list[MessageSchema]):
 
 
 # Not working yet...
-def display_chat_sessions_to_ui():
-    try:
-        # sessions_data = _get_all_chat_sessions()
-        if "sessions_history" in st.session_state:
-            # BUG -- ...
-            # try to retrieve all chat sessions from streamlit's session_state...
-            session_list = st.session_state["sessions_history"]
-            for session_data in session_list:
-                chat_name = f"New Chat_{session_data['session_id']}"
-                # Display each chat session button
-                with st.sidebar:
-                    for i, chat_name in enumerate(st.session_state["sessions_history"]):
-                        if st.button(chat_name, key=f"chat_{i}"):
-                            pass
-                            #st.session_state["active_chat_index"] = i
-    except Exception:
-        return
+def display_chat_sessions_to_ui():    
+    # sessions_data = _get_all_chat_sessions()
+    if "sessions_history" in st.session_state:
+        # BUG -- ...
+        # try to retrieve all chat sessions from streamlit's session_state...
+        session_list = st.session_state["sessions_history"]
+        print("======2")
+        print(session_list)
+        for session_id in session_list:
+            chat_name = f"New Chat_{session_id}"
+            # Display each chat session button
+            with st.sidebar:
+                for i, chat_name in enumerate(st.session_state["sessions_history"]):
+                    _ = st.button(chat_name, key=f"chat_{i}")    
+                    #st.session_state["active_chat_index"] = i
+
 
 
 def main():
