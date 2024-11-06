@@ -1,6 +1,7 @@
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 from pydantic import UUID4
+from sqlalchemy import delete
 from sqlalchemy.future import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import asyncpg  # Import specific asyncpg error
@@ -10,7 +11,7 @@ from sqlalchemy.sql import asc, desc
 from typing import Annotated
 
 
-async def _create_new_chat_session(user_id: int, db_session: AsyncSession):
+async def _create_new_chat_session(user_id: str, db_session: AsyncSession):
     try:
         session_obj = ChatSessionOrm(user_id=user_id)
         db_session.add(session_obj)
@@ -23,9 +24,36 @@ async def _create_new_chat_session(user_id: int, db_session: AsyncSession):
         return session_obj
     except SQLAlchemyError as e:
         raise HTTPException(status_code=404, detail=f"Failed to create a new chat session: {str(e)}")
+
+async def _delete_chat_session(session_id: str, user_id: str, db_session: AsyncSession):
+    try:
+        # check if the session_id exists
+        stmt = select(ChatSessionOrm.id, ChatSessionOrm.user_id, 
+                    ChatSessionOrm.created_at,
+                    ).where(
+                    ((ChatSessionOrm.user_id == user_id) & (ChatSessionOrm.id == session_id)))
+        result = await db_session.execute(stmt)
+        chat_session = result.scalars().first()
+
+        if not chat_session:
+            raise HTTPException(status_code=404, detail="Chat session not found")
+        
+        # delete the chat session by session_id
+        stmt = delete(ChatSessionOrm).where(
+                    (ChatSessionOrm.user_id == user_id) & (ChatSessionOrm.id == session_id)
+                    ).returning(ChatSessionOrm)
+        result = await db_session.execute(stmt)
+        _ = await db_session.commit()
+        chat_session = result.scalars().first()
+        return jsonable_encoder({"session_id": chat_session.id, 
+                "user_id": chat_session.user_id, 
+                "created_at": chat_session.created_at})
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=404, detail=f"Failed to delete chat session: {str(e)}")
     
 
-async def _get_all_chat_sessions(user_id: int, db_session: AsyncSession) -> list:
+async def _get_all_chat_sessions(user_id: str, db_session: AsyncSession) -> list:
     try:
         stmt = select(ChatSessionOrm.id, ChatSessionOrm.user_id, 
                     ChatSessionOrm.created_at, 
@@ -45,13 +73,12 @@ async def _get_all_chat_sessions(user_id: int, db_session: AsyncSession) -> list
                         "created_at": session[2],
                         } 
                         for session in all_sessions]
-        all_sessions = jsonable_encoder(all_sessions)
-        return all_sessions
+        return jsonable_encoder(all_sessions)
 
     except SQLAlchemyError as e:
         raise HTTPException(status_code=404, detail=f"Failed to load previous chat sessions: {str(e)}")
 
-async def _check_existing_chat_session(session_id: str, user_id: int, db_session: AsyncSession):
+async def _check_existing_chat_session(session_id: str, user_id: str, db_session: AsyncSession):
     try:
         stmt = select(ChatSessionOrm.id, ChatSessionOrm.user_id, 
                     ChatSessionOrm.created_at,

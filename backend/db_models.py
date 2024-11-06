@@ -1,5 +1,6 @@
 import datetime
 
+import uuid
 import passlib.hash
 from sqlalchemy import Column, ForeignKey, text
 from sqlalchemy.sql.schema import CheckConstraint, UniqueConstraint
@@ -13,9 +14,10 @@ class UserOrm(Base):
     __tablename__ = "user"
 
     id = Column(
-        UUID(as_uuid=True),
+        UUID,
         nullable=False,
         primary_key=True,
+        default=uuid.uuid4,
         server_default=text("uuid_generate_v4()"),
     )
     username = Column(String, nullable=False)
@@ -46,9 +48,10 @@ class ChatSessionOrm(Base):
     __tablename__ = "chat_session"
 
     id = Column(
-            UUID(as_uuid=True),
+            UUID,
             nullable=False,
             primary_key=True,
+            default=uuid.uuid4,
             server_default=text("uuid_generate_v4()"),
         )
     user_id = Column(

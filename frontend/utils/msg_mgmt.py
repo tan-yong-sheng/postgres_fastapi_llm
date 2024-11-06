@@ -36,7 +36,7 @@ def _fetch_assistant_response(prompt: str, session_id: str) -> str:
     """Sends a prompt to the backend and retrieves the assistant's response."""
     try:
         response = requests.post(
-            f"{BACKEND_BASE_URL}/api/v1/chat/send-message",
+            f"{BACKEND_BASE_URL}/api/v1/chat/new-message",
             data=json.dumps({"content": prompt, "role": settings.USER, "session_id": session_id}),
             headers={'authorization': f"Bearer {st.session_state.access_token}"}
         )

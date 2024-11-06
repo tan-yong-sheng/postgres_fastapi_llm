@@ -14,7 +14,8 @@ from backend.schemas.chat_session_schemas import ChatSessionResponseSchema
 from backend.utils.chat_completions_handler import get_openai_response
 from backend.utils.chat_session_handler import (_get_all_chat_sessions, 
                                             _get_chat_history_by_session_id, 
-                                            _create_new_chat_session)
+                                            _create_new_chat_session,
+                                            _delete_chat_session)
 
 chat_router = APIRouter()
 
@@ -28,20 +29,6 @@ async def get_all_chat_sessions(user: UserResponseSchema=Depends(current_user),
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
     return all_sessions
-        
-@chat_router.get("/{session_id}", response_model = Optional[list[RawAIMessageResponseSchema]])
-async def get_chat_history_by_session_id(session_id: str, 
-                        user: UserResponseSchema = Depends(current_user),  
-                        db_session: AsyncSession = Depends(get_db_session)):
-    # get historical chat messages by session_id and user_id
-    try:
-        all_messages = await _get_chat_history_by_session_id(
-                                session_id, user.id, db_session)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-    return all_messages
 
 
 @chat_router.post("/new-session", response_model = ChatSessionResponseSchema)
@@ -57,7 +44,35 @@ async def create_new_chat_session(user: UserResponseSchema=Depends(current_user)
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 
-@chat_router.post("/send-message", response_model=AIMessageResponseSchema)
+@chat_router.delete("/sessions/{session_id}")
+async def delete_chat_sessions(session_id: str,
+                                user: UserResponseSchema=Depends(current_user), 
+                                db_session: AsyncSession=Depends(get_db_session)):
+    try:
+        chat_session = await _delete_chat_session(session_id, user.id, db_session)
+        return chat_session
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@chat_router.get("/{session_id}", response_model = Optional[list[RawAIMessageResponseSchema]])
+async def get_chat_history_by_session_id(session_id: str, 
+                        user: UserResponseSchema = Depends(current_user),  
+                        db_session: AsyncSession = Depends(get_db_session)):
+    # get historical chat messages by session_id and user_id
+    try:
+        all_messages = await _get_chat_history_by_session_id(
+                                session_id, user.id, db_session)
+        return all_messages
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
+@chat_router.post("/new-message", response_model=AIMessageResponseSchema)
 async def send_message(
     request: MessageRequestSchema,
     user: UserResponseSchema = Depends(current_user),
